@@ -54,7 +54,7 @@ class Expense extends Model
     }
 
     #[Scope]
-    public function forUser($query = $this->query(), $userId)
+    public function forUser($query, $userId)
     {
         return $query->where('user_id', $userId);
     }
@@ -87,7 +87,7 @@ class Expense extends Model
     }
 
     // هل لازم اعمل حدث جديد
-    public function shouldGenerateNextOcurrences()
+    public function shouldGenerateNextOccurrences()
     {
         if ($this->isRecurring())
             return false;
@@ -98,7 +98,7 @@ class Expense extends Model
     }
 
     // تاريخ الحدث التالي
-    public function getNextOcurrenceDate()
+    public function getNextOccurrenceDate()
     {
         if (!$this->isRecurring())
             return null;
