@@ -1,46 +1,9 @@
-<div class="min-h-screen bg-gray-50 dark:bg-neutral-900 border-accent rounded-2xl pb-10">
+<x-livewire.layout>
+
     {{-- Header --}}
-    <div class=" border-accent rounded-t-2xl bg-gradient-to-r from-green-600 to-emerald-600 shadow-lg">
-        <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center justify-between flex-wrap">
-                <div class="">
-                    <h1 class="text-3xl font-bold text-white">Categories</h1>
-                    <p class="text-green-100 mt-1 ">
-                        orginize your expenses with custom categories
-                    </p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    {{-- messages/ flash messages --}}
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        @if (session()->has('message'))
-            <div
-                class="mb-6 bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg flex items-center justify-between">
-                <span>{{ session('message') }}</span>
-                <button onclick="this.parentElement.remove()" class="text-green-600 hover:text-green-800">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
-            </div>
-        @endif
-
-        @if (session()->has('error'))
-            <div
-                class="mb-6 bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg flex items-center justify-between">
-                <span>{{ session('error') }}</span>
-                <button onclick="this.parentElement.remove()" class="text-red-600 hover:text-red-800">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
-            </div>
-        @endif
-    </div>
+    <x-slot name="header">
+        <x-livewire.components.header name="Categories" description="orginize your expenses with custom categories" />
+    </x-slot>
 
     <div class="px-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
         {{-- create/edit category form --}}
@@ -110,7 +73,7 @@
         <div class="lg:col-span-2">
             <div class="bg-white dark:bg-accent-foreground rounded-xl shadow-md overflow-hidden">
                 <div class="p-6 border-b border-gray-200">
-                    <h3 class="text-lg font-semibold text-gray-400">Your Categories</h3>
+                    <h3 class="text-lg font-semibold text-shadow-gray-600 dark:text-gray-400">Your Categories</h3>
                     <p class="text-sm text-gray-400 mt-1">{{ $categories->count() }} categories</p>
                 </div>
 
@@ -127,7 +90,8 @@
                                                 style="background-color: {{ $category->color }};"></div>
                                         </div>
                                         <div class="flex-1">
-                                            <h4 class="text-lg font-semibold text-gray-600   dark:text-gray-400">{{ $category->name }}</h4>
+                                            <h4 class="text-lg font-semibold text-gray-600   dark:text-gray-400">
+                                                {{ $category->name }}</h4>
                                             <p class="text-sm text-gray-600   dark:text-gray-400">
                                                 {{ $category->expenses_count }}
                                                 {{ Str::plural('expense', $category->expenses_count) }}
@@ -206,4 +170,4 @@
             @endif
         </div>
     </div>
-</div>
+</x-livewire.layout>
