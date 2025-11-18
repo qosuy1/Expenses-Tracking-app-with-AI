@@ -1,7 +1,7 @@
 <div class="min-h-screen bg-gray-50 dark:bg-neutral-900 border-accent rounded-2xl pb-10">
     {{-- Header --}}
-    {{ $header }}
-    
+    {{ $header ?? ""}}
+
     {{-- messages/ flash messages --}}
     <div class="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         @if (session()->has('message'))
@@ -10,8 +10,7 @@
                 <span>{{ session('message') }}</span>
                 <button onclick="this.parentElement.remove()" class="text-green-600 hover:text-green-800">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M6 18L18 6M6 6l12 12" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                     </svg>
                 </button>
             </div>
@@ -31,5 +30,7 @@
         @endif
     </div>
 
-    {{ $slot }}
+    <div class="px-8">
+        {{ $slot }}
+    </div>
 </div>

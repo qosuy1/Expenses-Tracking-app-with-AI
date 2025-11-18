@@ -8,7 +8,7 @@
     <div class="px-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
         {{-- create/edit category form --}}
         <div class="lg:col-span-1">
-            <div class="bg-white dark:bg-accent-foreground rounded-xl shadow-md p-6 sticky top-8">
+            <div class="bg-white dark:bg-neutral-800 rounded-xl shadow-md p-6 sticky top-8">
                 <h3 class="text-lg font-semibold text-gray-400 mb-6">
                     {{ $isEditing ? 'Edit Category' : 'Create Category' }}
                 </h3>
@@ -71,7 +71,7 @@
 
         {{-- categories listing --}}
         <div class="lg:col-span-2">
-            <div class="bg-white dark:bg-accent-foreground rounded-xl shadow-md overflow-hidden">
+            <div class="bg-white dark:bg-neutral-800 rounded-xl shadow-md overflow-hidden">
                 <div class="p-6 border-b border-gray-200">
                     <h3 class="text-lg font-semibold text-shadow-gray-600 dark:text-gray-400">Your Categories</h3>
                     <p class="text-sm text-gray-400 mt-1">{{ $categories->count() }} categories</p>

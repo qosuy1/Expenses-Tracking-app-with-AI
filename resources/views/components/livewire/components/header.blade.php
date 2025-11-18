@@ -3,6 +3,8 @@
     'name' => 'default_name',
     'description' => 'default description',
     'withCalender' => false,
+    'selectedYear' => now()->year,
+    'selectedMonth' => now()->month
 ])
 
 
@@ -17,17 +19,18 @@
             </div>
             @if ($withCalender)
                 <div class="flex items-center gap-4">
-                    <button wire:click="previousMonth"
+                    {{-- calendar --}}
+                    <button title="Previous Month" wire:click="prevMonth"
                         class="p-2 bg-white/20 hover:bg-white/30 rounded-lg text-white transition">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                         </svg>
                     </button>
-                    <button wire:click="setCurrentMonth"
+                    <button title="get current Date" wire:click="setCurrentMonth"
                         class="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg text-white font-semibold transition">
                         {{ \Carbon\Carbon::create($selectedYear, $selectedMonth, 1)->format('F Y') }}
                     </button>
-                    <button wire:click="nextMonth"
+                    <button title="Next Month" wire:click="nextMonth"
                         class="p-2 bg-white/20 hover:bg-white/30 rounded-lg text-white transition">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
