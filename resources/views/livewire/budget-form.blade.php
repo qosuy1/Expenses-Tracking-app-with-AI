@@ -1,11 +1,17 @@
 <x-livewire.layout>
-    <h1 class='text-2xl font-semibold my-6 text-center '>Create Category</h1>
+    <h1 class='text-2xl font-semibold my-6 text-center '>
+        @if ($isEdit)
+            Edit Category
+        @else
+            Create Category
+        @endif
+    </h1>
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
         <form wire:submit="save" class="space-y-6">
 
             <!-- Budget Period Card -->
-            <div class="bg-white  dark:bg-gray-800 rounded-xl shadow-md p-6">
+            <div class="bg-white  dark:bg-neutral-800 rounded-xl shadow-md p-6">
                 <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-6 flex items-center gap-2">
                     <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -52,7 +58,7 @@
             </div>
 
             <!-- Budget Details Card -->
-            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
+            <div class="bg-white dark:bg-neutral-800 rounded-xl shadow-md p-6">
                 <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-6 flex items-center gap-2">
                     <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -92,8 +98,8 @@
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <span class="text-gray-500 text-xl">$</span>
                             </div>
-                            <input type="number" id="amount" wire:model.live.debounce.300ms="amount" step="0.01" min="0"
-                                placeholder="0.00"
+                            <input type="number" id="amount" wire:model.live.debounce.400ms="amount" step="1.0"
+                                min="0" placeholder="0.00"
                                 class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-lg @error('amount') border-red-500 @enderror">
                         </div>
                         @error('amount')
@@ -117,7 +123,7 @@
                                     <p class="text text-indigo-700">
                                         {{ \Carbon\Carbon::create($year, $month, 1)->format('F Y') }}
                                     </p>
-                                    <p class="text text-indigo-600 mt-1">
+                                    <p class="text text-indigo-600 mt-1">{{ \Carbon\Carbon::create($year, $month, 1)->daysInMonth }}  Days
                                         ≈ ${{ number_format($amount / $daysInMonth, 2) }}/day
                                     </p>
                                 </div>
@@ -173,7 +179,7 @@
 
         <!-- Examples Section -->
         @if (!$isEdit && $categories->count() > 0)
-            <div class="mt-8 bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
+            <div class="mt-8 bg-white dark:bg-neutral-800 rounded-xl shadow-md p-6">
                 <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">Budget Examples</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div class="p-4 bg-gray-50 rounded-lg">
