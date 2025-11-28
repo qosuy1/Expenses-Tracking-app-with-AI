@@ -4,7 +4,7 @@
     'description' => 'default description',
     'withCalender' => false,
     'selectedYear' => now()->year,
-    'selectedMonth' => now()->month
+    'selectedMonth' => now()->month,
 ])
 
 
@@ -16,6 +16,9 @@
                 <p class="text-green-100 mt-1 ">
                     {{ $description }}
                 </p>
+            </div>
+            <div>
+                {{ $button ?? ""  }}
             </div>
             @if ($withCalender)
                 <div class="flex items-center gap-4">
