@@ -32,14 +32,16 @@ class Budget extends Model
 
     public function getSpentAmountAttribute()
     {
-        // if we have budget for some category 
+        $query = Expense::forUser($this->user_id)
+            ->whereYear('date', $this->year)
+            ->whereMonth('date', $this->month);
+            
         if ($this->category_id) {
-            return $this->category->getTotalSpentForMonth($this->month, $this->year);
+            $query->where('category_id', $this->category_id);
+        }else{
+            $query->where('category_id', null);
         }
-        // if we don't have a spesifice budget for some category
-        return Expense::forUser(userId: $this->user)
-            ->inMonth($this->month, $this->year)
-            ->sum('amount');
+        return $query->sum('amount');
     }
 
 
