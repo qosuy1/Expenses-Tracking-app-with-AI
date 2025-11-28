@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Auth;
 
 class Expense extends Model
 {
@@ -53,30 +54,30 @@ class Expense extends Model
         return $this->hasMany(Expense::class, 'parent_expense_id');
     }
 
-    #[Scope]
-    public function forUser($query, $userId)
+    // #[Scope]
+    public function scopeForUser($query, $userId)
     {
         return $query->where('user_id', $userId);
     }
-    #[Scope]
-    public function recurring($query)
+    // #[Scope]
+    public function scopeRecurring($query)
     {
         return $query->where('type', 'recurring');
     }
-    #[Scope]
-    public function oneTime($query)
+    // #[Scope]
+    public function scopeOneTime($query)
     {
         return $query->where('type', 'one-time');
     }
 
-    #[Scope]
-    public function inMonth($query, $month, $year)
+    //  #[Scope]
+    public function scopeInMonth($query, $month, $year)
     {
         return $query->whereMonth('date', $month)->whereYear('date', $year);
     }
 
-    #[Scope]
-    public function inDateRange($query, $startDate, $endDate)
+    // #[Scope]
+    public function scopeInDateRange($query, $startDate, $endDate)
     {
         return $query->whereBetween('date', [$startDate, $endDate]);
     }
