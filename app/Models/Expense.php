@@ -20,7 +20,7 @@ class Expense extends Model
         'description',
         'date',
         'type',
-        'recurring_frequncy',
+        'recurring_frequency',
         'recurring_start_date',
         'recurring_end_date',
         'parent_expense_id',
@@ -90,7 +90,7 @@ class Expense extends Model
     // هل لازم اعمل حدث جديد
     public function shouldGenerateNextOccurrences()
     {
-        if ($this->isRecurring())
+        if (!$this->isRecurring())
             return false;
         if ($this->recurring_end_date && now()->isAfter($this->recurring_end_date))
             return false;
@@ -105,9 +105,9 @@ class Expense extends Model
             return null;
         $lastChildExpense = $this->childExpenses()->orderBy('date', 'desc')->first();
 
-        $baseDate = ($lastChildExpense ? $lastChildExpense->date : $lastChildExpense->recurring_start_date);
+        $baseDate = ($lastChildExpense ? $lastChildExpense->date : $this->recurring_start_date);
 
-        return match ($this->recurring_frequncy) {
+        return match ($this->recurring_frequency) {
             'daily' => $baseDate->copy()->addDay(),
             'weekly' => $baseDate->copy()->addWeek(),
             'monthly' => $baseDate->copy()->addMonth(),
