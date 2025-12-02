@@ -23,7 +23,7 @@
             </button>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <!-- Search -->
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Search</label>
@@ -43,17 +43,19 @@
                 </select>
             </div>
 
-            <!-- One Time Only Filter -->
+            {{-- Expenses Type --}}
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">show one-time expenses only</label>
-                <label for="AcceptConditions"
-                    class="relative block h-8 w-14  rounded-full bg-gray-300 transition-colors [-webkit-tap-highlight-color:transparent] has-checked:bg-blue-500">
-                    <input wire:model.live="onlyOneTimeExpenses" type="checkbox" id="AcceptConditions"
-                        class="peer sr-only">
-                    <span
-                        class="absolute inset-y-0 start-0 m-1 size-6 rounded-full bg-white transition-[inset-inline-start] peer-checked:start-6"></span>
-                </label>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Expenses Type</label>
+                <select wire:model.live="ExpensesType"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                    <option value=''>All Expenses</option>
+                    {{-- @foreach ($categories as $category) --}}
+                    <option value="{{ 'one-time' }}">One-Time Expenses</option>
+                    <option value="{{ 'recurring' }}">Auto-Generated Expenses</option>
+                    {{-- @endforeach --}}
+                </select>
             </div>
+
 
             <!-- Start Date -->
             <div>
@@ -183,8 +185,8 @@
                             </td>
                             <td class="text-center px-6 py-4  whitespace-nowrap">
                                 <div>
-                                    @if ($expense->type == 'recurring')
-                                        <flux:icon.check-circle class="text-green-500" />
+                                    @if ($expense->recurring_expense_id)
+                                        <flux:icon.arrow-path class="text-green-500" />
                                     @else
                                         <flux:icon.x-circle class="text-red-500" />
                                     @endif
@@ -242,7 +244,7 @@
 
         @if ($expenses->hasPages())
             <div class="px-6 py-4 border-t border-gray-200">
-                {{ $expenses->links() }}
+                {{ $expenses->onEachSide(1)->links() }}
             </div>
         @endif
     </div>

@@ -4,11 +4,15 @@ namespace App\Livewire\Expense;
 
 use App\Models\Category;
 use App\Models\Expense;
+use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
+use Livewire\WithPagination;
 
 class ExpenseList extends Component
 {
+    use WithPagination;
+
     // public properties
     public $search = "";
     public $selectedCategory = null;
@@ -17,7 +21,9 @@ class ExpenseList extends Component
     public $sortField = 'date';
     public $sortDirection = 'desc';
     public $showFilters = false;
-    public $onlyOneTimeExpenses = false;
+    public $ExpensesType = '';
+
+    protected $paginationTheme = 'tailwind';
 
 
     public function mount()
@@ -30,19 +36,17 @@ class ExpenseList extends Component
         }
     }
 
-    // Computed property of expense
-    #[Computed]
-    public function expenses()
+    protected function expensesQuery()
     {
-        return Expense::with('category')->forUser(auth()->user()->id)
+        return Expense::with('category')->forUser(Auth::id())
             ->orderBy($this->sortField, $this->sortDirection)
 
             // add sort and search filters
-            ->when($this->search, function ($query) {
+            ->when($this->search != '', function ($query) {
                 $query->where('title', 'like', '%' . $this->search . '%')
                     ->orWhere('description', 'like', '%' . $this->search . '%');
             })
-            ->when($this->selectedCategory, function ($query) {
+            ->when($this->selectedCategory != '', function ($query) {
                 $query->where('category_id', $this->selectedCategory);
             })
             ->when($this->startDate, function ($query) {
@@ -51,10 +55,14 @@ class ExpenseList extends Component
             ->when($this->endDate, function ($query) {
                 $query->whereDate('date', '<=', $this->endDate);
             })
-            ->when($this->onlyOneTimeExpenses, function ($query) {
-                $query->where('type', 'one-time');
-            })
-            ->paginate(10);
+            ->when($this->ExpensesType === 'one-time', fn($query) => $query->oneTime())
+            ->when($this->ExpensesType === 'recurring', fn($query) => $query->recurring());
+    }
+
+    #[Computed]
+    public function expenses()
+    {
+        return (clone $this->expensesQuery())->paginate(10);
     }
 
     #[Computed]
@@ -66,7 +74,7 @@ class ExpenseList extends Component
     #[Computed]
     public function categories()
     {
-        return Category::where('user_id', auth()->id())->get();
+        return Category::where('user_id', Auth::id())->get();
     }
 
     // sorting data
@@ -82,7 +90,7 @@ class ExpenseList extends Component
     // deleteing the expense
     public function deleteExpense($expenseId)
     {
-        $expense = Expense::forUser(auth()->user())->find($expenseId);
+        $expense = Expense::forUser(Auth::id())->find($expenseId);
         if ($expense) {
             $expense->delete();
             session()->flash('message', 'Expense deleted successfully.');
@@ -95,6 +103,7 @@ class ExpenseList extends Component
     {
         $this->search = "";
         $this->selectedCategory = null;
+        $this->ExpensesType = '';
         $this->startDate = now()->startOfMonth()->format('Y-m-d');
         $this->endDate = now()->endOfMonth()->format('Y-m-d');
     }

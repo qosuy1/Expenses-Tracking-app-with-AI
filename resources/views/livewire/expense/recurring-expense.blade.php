@@ -22,7 +22,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-sm text-gray-600 mb-1">Active Recurring</p>
-                    <p class="text-3xl font-bold text-gray-900">{{ $recurringExpenses->count() }}</p>
+                    <p class="text-3xl font-bold text-gray-900">{{ $activeRecurringCount }}</p>
                 </div>
                 <div class="p-3 bg-blue-100 rounded-lg">
                     <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -56,9 +56,10 @@
                 <div>
                     <p class="text-sm text-gray-600 mb-1">Generated This Month</p>
                     <p class="text-3xl font-bold text-gray-900">
-                        {{ $recurringExpenses->sum(function ($expense) {
+                        {{-- {{ $recurringExpenses->sum(function ($expense) {
                             return $expense->childExpenses()->whereMonth('date', now()->month)->whereYear('date', now()->year)->count();
-                        }) }}
+                        }) }} --}}
+                        {{ $generatedExpensesCount }}
                     </p>
                 </div>
                 <div class="p-3 bg-green-100 rounded-lg">
@@ -90,7 +91,8 @@
                                 @endif
                             </div>
                             <div class="flex items-center gap-2">
-                                <a href="/expenses/{{ $expense->id }}/edit"
+                                <a wire:navigate
+                                    href="{{ route('expenses.edit', ['expenseId' => $expense->id, 'isItRecurring' => true]) }}"
                                     class="p-2 bg-white/20 hover:bg-white/30 rounded-lg text-white transition">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -142,10 +144,45 @@
                                         {{ $expense->recurring_end_date->format('M d, Y') }}
                                     </span>
                                 </div>
+                                {{-- is it active --}}
+                                <div class="flex items-center justify-center text-sm">
+                                    {{-- <span class="text-gray-600">Ends</span> --}}
+                                    @if ($expense->isActive())
+                                        <span
+                                            class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-200 text-green-600">
+                                            {{ 'Active' }}
+                                        </span>
+                                    @else
+                                        <span
+                                            class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-200 text-red-600">
+                                            {{ 'Inactive' }}
+                                        </span>
+                                    @endIf
+                                </div>
+                                {{-- show Remaining Days --}}
+                                <div class="flex items-center justify-between text-sm">
+                                    <span class="text-gray-600">Remaining Days</span>
+                                    <span class="font-bold text-gray-900">
+                                        {{ $expense->getRemainingDays() }}
+                                    </span>
+                                </div>
                             @else
                                 <div class="flex items-center justify-between text-sm">
                                     <span class="text-gray-600">Ends</span>
                                     <span class="font-medium text-gray-600">Never</span>
+                                </div>
+                                <div class="flex items-center justify-center text-sm">
+                                    <span
+                                        class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-200 text-green-600">
+                                        {{ 'Active' }}
+                                    </span>
+                                </div>
+                                {{-- show Remaining Days --}}
+                                <div class="flex items-center justify-between text-sm">
+                                    <span class="text-gray-600">Remaining Days</span>
+                                    <span class="font-medium text-gray-500">
+                                        {{ 'Unlimited' }}
+                                    </span>
                                 </div>
                             @endif
                         </div>

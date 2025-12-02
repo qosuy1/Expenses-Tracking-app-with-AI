@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use Attribute;
 use Illuminate\Database\Eloquent\Model;
 
 class Budget extends Model
@@ -32,16 +31,21 @@ class Budget extends Model
 
     public function getSpentAmountAttribute()
     {
-        $query = Expense::forUser($this->user_id)
+        $expenseQuery = Expense::forUser($this->user_id)
             ->whereYear('date', $this->year)
             ->whereMonth('date', $this->month);
-            
-        if ($this->category_id) {
-            $query->where('category_id', $this->category_id);
-        }else{
-            $query->where('category_id', null);
-        }
-        return $query->sum('amount');
+
+        // $budget = $this->where('user_id', $this->user_id)
+        //     ->where('month', $this->month)
+        //     ->where('year', $this->year)->get();
+        // if ($budget->count() > 1) {
+            if ($this->category_id) {
+                $expenseQuery->where('category_id', $this->category_id);
+            } else {
+                $expenseQuery->where('category_id', null);
+            }
+        // }
+        return $expenseQuery->sum('amount');
     }
 
 

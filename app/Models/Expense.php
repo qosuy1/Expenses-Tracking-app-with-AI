@@ -19,17 +19,11 @@ class Expense extends Model
         'title',
         'description',
         'date',
-        'type',
-        'recurring_frequency',
-        'recurring_start_date',
-        'recurring_end_date',
-        'parent_expense_id',
+        'recurring_expense_id',
         'is_auto_generated'
     ];
 
     protected $casts = [
-        'recurring_start_date' => 'date',
-        'recurring_end_date' => 'date',
         'date' => 'date',
         'is_auto_generated' => 'boolean',
         'amount' => 'decimal:2',
@@ -44,14 +38,9 @@ class Expense extends Model
         return $this->belongsTo(Category::class);
     }
 
-    public function parentExpense()
+    public function recurringExpense()
     {
-        return $this->belongsTo(Expense::class, 'parent_expense_id');
-    }
-
-    public function childExpenses()
-    {
-        return $this->hasMany(Expense::class, 'parent_expense_id');
+        return $this->belongsTo(RecurringExpense::class, 'recurring_expense_id');
     }
 
     // #[Scope]
@@ -62,12 +51,12 @@ class Expense extends Model
     // #[Scope]
     public function scopeRecurring($query)
     {
-        return $query->where('type', 'recurring');
+        return $query->whereNotNull('recurring_expense_id');
     }
     // #[Scope]
     public function scopeOneTime($query)
     {
-        return $query->where('type', 'one-time');
+        return $query->where('recurring_expense_id', null);
     }
 
     //  #[Scope]
@@ -82,38 +71,27 @@ class Expense extends Model
         return $query->whereBetween('date', [$startDate, $endDate]);
     }
 
+    public function scopeThisMonth($query)
+    {
+        return $query->whereBetween('date', [
+            now()->startOfMonth(),
+            now()->endOfMonth()
+        ]);
+    }
+    public function scopeThisYear($query)
+    {
+        return $query->whereYear('date', now()->year);
+    }
+
+
     public function isRecurring()
     {
-        return $this->type == 'recurring';
+        return $this->recurring_expense_id !== null || $this->is_auto_generated;
     }
 
-    // هل لازم اعمل حدث جديد
-    public function shouldGenerateNextOccurrences()
+    public function formattedAmount()
     {
-        if (!$this->isRecurring())
-            return false;
-        if ($this->recurring_end_date && now()->isAfter($this->recurring_end_date))
-            return false;
-
-        return true;
-    }
-
-    // تاريخ الحدث التالي
-    public function getNextOccurrenceDate()
-    {
-        if (!$this->isRecurring())
-            return null;
-        $lastChildExpense = $this->childExpenses()->orderBy('date', 'desc')->first();
-
-        $baseDate = ($lastChildExpense ? $lastChildExpense->date : $this->recurring_start_date);
-
-        return match ($this->recurring_frequency) {
-            'daily' => $baseDate->copy()->addDay(),
-            'weekly' => $baseDate->copy()->addWeek(),
-            'monthly' => $baseDate->copy()->addMonth(),
-            'yearly' => $baseDate->copy()->addYear(),
-            default => throw new \Exception('Invalid recurring frequency')
-        };
+        return number_format($this->amount, 2);
     }
 
 }

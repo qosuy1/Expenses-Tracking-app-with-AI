@@ -3,6 +3,7 @@
 namespace App\Livewire\Expense;
 
 use App\Models\Expense;
+use App\Models\RecurringExpense as ModelsRecurringExpense;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
@@ -13,10 +14,11 @@ class RecurringExpense extends Component
     #[Computed]
     public function recurringExpenses()
     {
-        return Expense::with(['category', 'childExpenses'])->forUser(Auth::id())->recurring()->get();
+        // return Expense::with(['category', 'childExpenses'])->forUser(Auth::id())->recurring()->get();
+        return ModelsRecurringExpense::with('category')->forUser(Auth::id());
     }
     #[Computed]
-    public function monthlyTotal()
+    public function monthlyRecurringTotal()
     {
         // $monthlyTotal = $this->recurringExpenses
         //     ->where('recurring_frequency', 'monthly')
@@ -33,8 +35,8 @@ class RecurringExpense extends Component
         // return $monthlyTotal + $dailyTotalinEveryMonth + $weeklyTotalinEveryMonth + $yearlyTotalinEveryMonth;
 
         // Aggregate sums per frequency in a single query to minimize DB round-trips
-        $sums = Expense::forUser(Auth::id())
-            ->recurring()
+        $sums = ModelsRecurringExpense::forUser(Auth::id())
+            ->active()
             ->selectRaw("SUM(CASE WHEN recurring_frequency = 'monthly' THEN amount ELSE 0 END) as monthly_sum")
             ->selectRaw("SUM(CASE WHEN recurring_frequency = 'daily' THEN amount ELSE 0 END) as daily_sum")
             ->selectRaw("SUM(CASE WHEN recurring_frequency = 'weekly' THEN amount ELSE 0 END) as weekly_sum")
@@ -55,16 +57,25 @@ class RecurringExpense extends Component
 
         return $monthly + $dailyTotalinEveryMonth + $weeklyTotalinEveryMonth + $yearlyTotalinEveryMonth;
     }
+    #[Computed]
+    public function generatedExpensesCount()
+    {
+        return Expense::forUser(Auth::id())
+            ->inDateRange(now()->startOfMonth(), now()->endOfMonth())
+            ->recurring()->count();
+    }
 
-    public function deleteRecurringExpense($expenseid){
-        $expense = Expense::forUser(Auth::id())->recurring()->findOrFail($expenseid);
+    public function deleteRecurringExpense($expenseid)
+    {
+        $expense = ModelsRecurringExpense::forUser(Auth::id())->find($expenseid);
+
         if (!$expense) {
             session()->flash('error', 'Recurring expense not found.');
             return;
         }
 
         // Delete child expenses first
-        $expense->childExpenses()->each(function($childExpense){
+        $expense->childExpenses()->each(function ($childExpense) {
             $childExpense->delete();
         });
 
@@ -73,14 +84,16 @@ class RecurringExpense extends Component
 
         session()->flash('message', 'Recurring expense and its occurrences deleted successfully.');
     }
-    
+
     public function render()
     {
         return view(
             'livewire.expense.recurring-expense',
             [
-                'recurringExpenses' => $this->recurringExpenses,
-                'monthlyTotal' => $this->monthlyTotal,
+                'generatedExpensesCount' => $this->generatedExpensesCount,
+                'recurringExpenses' => $this->recurringExpenses->latest()->get(),
+                'monthlyTotal' => $this->monthlyRecurringTotal,
+                'activeRecurringCount' => $this->recurringExpenses->active()->count(),
             ]
         );
     }

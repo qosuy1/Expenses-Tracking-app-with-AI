@@ -5,6 +5,7 @@ namespace App\Livewire\Expense;
 use App\Models\Expense;
 use Livewire\Component;
 use App\Models\Category;
+use App\Models\RecurringExpense;
 use Livewire\Attributes\Computed;
 use Illuminate\Support\Facades\Auth;
 
@@ -19,9 +20,10 @@ class ExpenseForm extends Component
     public $category_id;
     public $description;
     // Expense Type
-    public $type = "one-time";
+    // public $type = "one-time";
 
     // recurring fields
+    public $isItRecurring = false;
     public $recurring_frequency = 'monthly';
     public $recurring_start_date;
     public $recurring_end_date;
@@ -32,6 +34,7 @@ class ExpenseForm extends Component
 
         if ($expenseId) {
             $this->isEdit = true;
+            $this->isItRecurring = request()->get('isItRecurring', false);
             $this->expenseId = $expenseId;
             $this->loadExpense();
         } else {
@@ -40,24 +43,41 @@ class ExpenseForm extends Component
     }
     private function loadExpense()
     {
-        $expense = Expense::forUser(auth()->user()->id)->findOrFail($this->expenseId);
-        if (!$expense)
+
+        // if the expense is one-time, we should load it
+        // $expense = Expense::forUser(auth()->user()->id)->oneTime()->findOrFail($this->expenseId);
+        // // dd($expense);
+        // if (!$expense) {
+
+        //     // so if the expense is not one-time, try to load it as recurring
+        //     $expense = RecurringExpense::forUser(auth()->user()->id)->findOrFail($this->expenseId);
+        //     $isItRecurring = true;
+        // }
+
+        if ($this->isItRecurring) {
+            $expense = RecurringExpense::forUser(auth()->user()->id)->findOrFail($this->expenseId);
+        } else {
+            $expense = Expense::forUser(auth()->user()->id)->oneTime()->findOrFail($this->expenseId);
+        }
+        if (!$expense) {
             abort(404);
+        }
         if (auth()->user()->id != $expense->user_id)
             abort(403);
 
 
         $this->amount = $expense->amount;
         $this->title = $expense->title;
-        $this->date = $expense->date->format('Y-m-d');
         $this->description = $expense->description;
         $this->category_id = $expense->category_id;
-        $this->type = $expense->type;
+        // $this->type = $expense->type;
 
-        if ($this->type === 'recurring') {
+        if ($this->isItRecurring) {
             $this->recurring_frequency = $expense->recurring_frequency;
             $this->recurring_start_date = $expense->recurring_start_date->format('Y-m-d');
             $this->recurring_end_date = $expense->recurring_end_date ? $expense->recurring_end_date->format('Y-m-d') : null;
+        } else {
+            $this->date = $expense->date->format('Y-m-d');
         }
     }
 
@@ -75,13 +95,14 @@ class ExpenseForm extends Component
             'category_id' => 'nullable|exists:categories,id',
             'title' => "string|required",
             'description' => "string|nullable",
-            'type' => "required|in:recurring,one-time",
-            'date' => 'required|date',
+            // 'type' => "required|in:recurring,one-time",
         ];
-        if ($this->type === 'recurring') {
+        if ($this->isItRecurring) {
             $rules['recurring_frequency'] = 'required|in:daily,weekly,monthly,yearly';
             $rules['recurring_start_date'] = 'date|required';
             $rules['recurring_end_date'] = 'date|nullable|after_or_equal:recurring_start_date';
+        } else {
+            $rules['date'] = 'required|date';
         }
         return $rules;
     }
@@ -90,51 +111,69 @@ class ExpenseForm extends Component
     {
         $this->validate();
 
-        $data = [
-            'user_id' => Auth::user()->id,
-            'amount' => $this->amount,
-            'title' => $this->title,
-            'description' => $this->description,
-            'date' => $this->date,
-            'category_id' => $this->category_id ?: null,
-            'type' => $this->type,
-        ];
-        if ($this->type == 'recurring') {
-            $data['recurring_frequency'] = $this->recurring_frequency;
-            $data['recurring_start_date'] = $this->recurring_start_date;
-            $data['recurring_end_date'] = $this->recurring_end_date ?: null;
-            // dd($data);
-        } else {
-            $data['recurring_frequency'] = null;
-            $data['recurring_start_date'] = null;
-            $data['recurring_end_date'] = null;
-        }
 
+        if ($this->isItRecurring) {
 
-        if ($this->isEdit) {
-            $expense = Expense::findOrFail($this->expenseId);
-            if ($expense->user_id !== Auth::user()->id) {
-                abort(403);
+            $data = [
+                'user_id' => Auth::user()->id,
+                'amount' => $this->amount,
+                'title' => $this->title,
+                'description' => $this->description,
+                // 'date' => $this->date,
+                'category_id' => $this->category_id ?: null,
+
+                'recurring_frequency' => $this->recurring_frequency,
+                'recurring_start_date' => $this->recurring_start_date,
+                'recurring_end_date' => $this->recurring_end_date ?: null,
+            ];
+
+            if ($this->isEdit) {
+                $expense = RecurringExpense::findOrFail($this->expenseId);
+                if ($expense->user_id !== Auth::user()->id) {
+                    abort(403);
+                }
+                // dd($data);
+                // dd($data , ['number'=>"1"]);
+
+                $expense->forceFill($data)->save();
+
+                session()->flash('message', 'Recurring Expense updated successfully.');
+            } else {
+                // dd($data, ['number' => "2"]);
+
+                RecurringExpense::fillAndInsert($data);
+                session()->flash('message', 'Recurring Expense created successfully.');
             }
-            // dd($data);
-            // dd($data , ['number'=>"1"]);
-
-            $expense->forceFill($data)->save();
-
-            session()->flash('message', 'Expense updated successfully.');
-        } else {
-            // dd($data, ['number' => "2"]);
-
-            Expense::fillAndInsert($data);
-            session()->flash('message', 'Expense created successfully.');
-        }
-
-        if ($this->type === 'recurring') {
             return $this->redirect(route('expenses.recurring'), navigate: true);
-        }
-        
-        return $this->redirect(route('expenses.index'), navigate: true);
+        } else {
+            $data = [
+                'user_id' => Auth::user()->id,
+                'amount' => $this->amount,
+                'title' => $this->title,
+                'description' => $this->description,
+                'date' => $this->date,
+                'category_id' => $this->category_id ?: null,
+                'is_auto_generated' => false,
+                'recurring_expense_id' => null,
+            ];
 
+
+            if ($this->isEdit) {
+                $expense = Expense::findOrFail($this->expenseId);
+                if ($expense->user_id !== Auth::user()->id) {
+                    abort(403);
+                }
+
+                $expense->forceFill($data)->save();
+
+                session()->flash('message', 'Expense updated successfully.');
+            } else {
+
+                Expense::fillAndInsert($data);
+                session()->flash('message', 'Expense created successfully.');
+            }
+        }
+        return $this->redirect(route('expenses.index'), navigate: true);
     }
 
     public function render()

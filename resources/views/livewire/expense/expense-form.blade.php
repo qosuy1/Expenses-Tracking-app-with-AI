@@ -45,7 +45,7 @@
                     <label for="date" class="block text-sm font-medium text-gray-700 mb-2">
                         Date <span class="text-red-500">*</span>
                     </label>
-                    <input type="date" id="date" wire:model="date" value="{{ $date }}"
+                    <input @if($isItRecurring) disabled readonly @endif type="date" id="date" wire:model="date" value="{{ $date }}"
                         class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent @error('date') border-red-500 @enderror">
                     @error('date')
                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -99,12 +99,12 @@
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                 <label
-                    class="relative flex items-center p-4 border-2 rounded-lg cursor-pointer transition {{ $type === 'one-time' ? 'border-purple-500 bg-purple-50' : 'border-gray-200 hover:border-gray-300' }}">
-                    <input type="radio" wire:model.live="type" value="one-time" class="sr-only">
+                    class="relative flex items-center p-4 border-2 rounded-lg cursor-pointer transition {{ $isItRecurring == false ? 'border-purple-500 bg-purple-50' : 'border-gray-200 hover:border-gray-300' }}">
+                    <input type="radio" wire:model.live="isItRecurring" value=0 class="sr-only">
                     <div class="flex-1">
                         <div class="flex items-center gap-3">
                             <div
-                                class="w-10 h-10 rounded-lg {{ $type === 'one-time' ? 'bg-purple-600' : 'bg-gray-300' }} flex items-center justify-center">
+                                class="w-10 h-10 rounded-lg {{ $isItRecurring == false ? 'bg-purple-600' : 'bg-gray-300' }} flex items-center justify-center">
                                 <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor"
                                     viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -117,7 +117,7 @@
                             </div>
                         </div>
                     </div>
-                    @if ($type === 'one-time')
+                    @if ($isItRecurring == false)
                         <svg class="w-6 h-6 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd"
                                 d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
@@ -127,12 +127,12 @@
                 </label>
 
                 <label
-                    class="relative flex items-center p-4 border-2 rounded-lg cursor-pointer transition {{ $type === 'recurring' ? 'border-purple-500 bg-purple-50' : 'border-gray-200 hover:border-gray-300' }}">
-                    <input type="radio" wire:model.live="type" value="recurring" class="sr-only">
+                    class="relative flex items-center p-4 border-2 rounded-lg cursor-pointer transition {{ $isItRecurring ? 'border-purple-500 bg-purple-50' : 'border-gray-200 hover:border-gray-300' }}">
+                    <input type="radio" wire:model.live="isItRecurring" value=1 class="sr-only">
                     <div class="flex-1">
                         <div class="flex items-center gap-3">
                             <div
-                                class="w-10 h-10 rounded-lg {{ $type === 'recurring' ? 'bg-purple-600' : 'bg-gray-300' }} flex items-center justify-center">
+                                class="w-10 h-10 rounded-lg {{ $isItRecurring ? 'bg-purple-600' : 'bg-gray-300' }} flex items-center justify-center">
                                 <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor"
                                     viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -145,7 +145,7 @@
                             </div>
                         </div>
                     </div>
-                    @if ($type === 'recurring')
+                    @if ($isItRecurring)
                         <svg class="w-6 h-6 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd"
                                 d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
@@ -155,7 +155,7 @@
                 </label>
             </div>
 
-            @if ($type === 'recurring')
+            @if ($isItRecurring)
                 <div class="space-y-4 p-4 bg-purple-50 rounded-lg border border-purple-100">
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <!-- Frequency -->

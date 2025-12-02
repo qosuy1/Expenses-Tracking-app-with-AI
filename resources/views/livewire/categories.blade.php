@@ -19,7 +19,7 @@
                         <label for="name" class="block text-sm font-medium text-gray-400 mb-2">
                             Category Name <span class="text-red-500">*</span>
                         </label>
-                        <input type="text" id="name" wire:model="name" placeholder="e.g., Food & Dining"
+                        <input type="text" id="name" wire:model.live.debounce.500ms="name" placeholder="e.g., Food & Dining"
                             class="w-full dark:text-gray-400 px-4 py-3 border border-gray-400 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent @error('name') border-red-500 @enderror">
                         @error('name')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
