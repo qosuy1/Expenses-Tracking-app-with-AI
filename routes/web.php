@@ -3,6 +3,7 @@
 use App\Livewire\BudgetForm;
 use App\Livewire\Budgetlist;
 use App\Livewire\Categories;
+use App\Livewire\Dashboard;
 use Laravel\Fortify\Features;
 use App\Livewire\Settings\Profile;
 use App\Livewire\Settings\Password;
@@ -17,8 +18,8 @@ Route::get('/', function () {
     return view('welcome');
 })->name('home');
 
-Route::view('dashboard', 'dashboard')
-    ->middleware(['auth', 'verified'])
+Route::get('dashboard', Dashboard::class)
+    ->middleware('auth')
     ->name('dashboard');
 
 Route::middleware(['auth'])->group(function () {
@@ -27,7 +28,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/categories', Categories::class)->name('categories.index');
 
     // Budget Routes
-    Route::get('/budgets' , Budgetlist::class)->name('budgets.index');
+    Route::get('/budgets', Budgetlist::class)->name('budgets.index');
     Route::get('/budgets/create', BudgetForm::class)->name('budgets.create');
     Route::get('/budgets/{budgetId}/edit', BudgetForm::class)->name('budgets.edit');
 
