@@ -15,6 +15,20 @@ jobs:
     runs-on: ubuntu-latest
     environment: Testing
 
+    services:
+      mysql:
+        image: mysql:8
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: testing
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping --silent"
+          --health-interval=5s
+          --health-timeout=3s
+          --health-retries=5
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -29,8 +43,8 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
-          cache: 'npm'
+          node-version: "22"
+          cache: "npm"
 
       - name: Install Node Dependencies
         run: npm i
@@ -44,11 +58,32 @@ jobs:
       - name: Copy Environment File
         run: cp .env.example .env
 
+      - name: Configure Database
+        run: |
+          echo "DB_CONNECTION=mysql" >> .env
+          echo "DB_HOST=127.0.0.1" >> .env
+          echo "DB_PORT=3306" >> .env
+          echo "DB_DATABASE=testing" >> .env
+          echo "DB_USERNAME=root" >> .env
+          echo "DB_PASSWORD=root" >> .env
+
       - name: Generate Application Key
         run: php artisan key:generate
+
+      - name: Extract APP_KEY for tests
+        id: app_key
+        run: |
+          APP_KEY=$(grep "^APP_KEY=" .env | cut -d '=' -f2-)
+          echo "key=$APP_KEY" >> $GITHUB_OUTPUT
+          echo "APP_KEY=$APP_KEY" >> $GITHUB_ENV
+
+      - name: Run Migrations
+        run: php artisan migrate --force
 
       - name: Build Assets
         run: npm run build
 
       - name: Run Tests
+        env:
+          APP_KEY: ${{ steps.app_key.outputs.key }}
         run: ./vendor/bin/phpunit
