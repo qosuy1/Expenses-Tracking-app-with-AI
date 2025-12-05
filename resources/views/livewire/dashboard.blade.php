@@ -135,19 +135,23 @@
                         <div class="flex items-center justify-between">
                             <div class="flex items-center gap-3">
                                 <div class="w-10 h-10 rounded-lg flex items-center justify-center"
-                                    style="background-color: {{ $category->color }}20;">
+                                    style="background-color: {{ $category['color'] }}20;">
                                     <div class="w-3 h-3 rounded-full"
-                                        style="background-color: {{ $category->color }};"></div>
+                                        style="background-color: {{ $category['color'] }};"></div>
                                 </div>
                                 <div>
-                                    <div class="font-medium text-gray-800">{{ $category->name }}</div>
+                                    <div class="font-medium text-gray-800">{{ $category['name'] }}</div>
                                     <div class="text-sm text-gray-500">
-                                        {{ round(($category->total / $totalSpent) * 100, 1) }}% of total
+                                        @if ($totalSpent > 0)
+                                            {{ round(($category['total'] / $totalSpent) * 100, 1) }}% of total
+                                        @else
+                                            {{ 0 }}
+                                        @endif
                                     </div>
                                 </div>
                             </div>
                             <div class="text-right">
-                                <div class="font-bold text-gray-800">${{ number_format($category->total, 2) }}</div>
+                                <div class="font-bold text-gray-800">${{ number_format($category['total'], 2) }}</div>
                             </div>
                         </div>
                     @empty

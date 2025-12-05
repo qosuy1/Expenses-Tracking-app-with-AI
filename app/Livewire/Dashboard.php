@@ -6,12 +6,14 @@ use Carbon\Month;
 use Carbon\Carbon;
 use App\Models\Budget;
 use App\Models\Expense;
-use ArielMejiaDev\LarapexCharts\LarapexChart;
 use Livewire\Component;
+use App\Models\Category;
 use Livewire\Attributes\Title;
 use Livewire\Attributes\Computed;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use ArielMejiaDev\LarapexCharts\LarapexChart;
+use Illuminate\Support\Collection;
 
 #[Title("Dashboard - ExpenseApp")]
 class Dashboard extends Component
@@ -30,6 +32,92 @@ class Dashboard extends Component
 
     public $topCategories;
     public $recurringExpenseCount;
+
+    // Private functions
+    private function getExpenseByCategory($userId, $month, $year): Collection
+    {
+        $expenseByCategory = Expense::with('category')->select('categories.name', 'categories.color', DB::raw('SUM(expenses.amount) as total'))
+            ->join('categories', 'expenses.category_id', '=', 'categories.id')
+            ->where('expenses.user_id', $userId)
+            ->whereMonth('expenses.date', $month)
+            ->whereYear('expenses.date', $year)
+            ->groupBy('categories.name', 'categories.color')
+            ->orderBy('total', 'desc')
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'name' => $item->name,
+                    'color' => $item->color,
+                    'total' => $item->total
+                ];
+            })->collect();
+
+        // Add Overall Budget to the array
+        $overallBudgetSpent = $this->overallBudgetSpent();
+        if ($overallBudgetSpent > 0) {
+            $expenseByCategory->push(
+                [
+                    'name' => 'Overall Budget',
+                    'color' => 'oklch(44.6% 0.03 256.802)',
+                    'total' => (float) round($overallBudgetSpent, 2),
+                ]
+            );
+        }
+        return $expenseByCategory;
+    }
+    private function getMonthlyComparison(int $userId, int $month, int $year, int $monthsCount = 6)
+    {
+        // Generate date range for the last N months
+        $dateRange = collect();
+        for ($i = $monthsCount - 1; $i >= 0; $i--) {
+            $dateRange->push(Carbon::create($year, $month, 1)->subMonths($i));
+        }
+
+        // Get expenses grouped by month
+        $monthsSpent = Expense::query()
+            ->select(
+                DB::raw("SUM(amount) as total"),
+                DB::raw("MONTH(date) as month"),
+                DB::raw("YEAR(date) as year")
+            )
+            ->forUser($userId)
+            ->inDateRange($dateRange->first(), $dateRange->last()->copy()->endOfMonth())
+            ->groupBy('month', 'year')
+            ->get()
+            ->map(function ($expense) {
+                return [
+                    'total' => (float) $expense->total,
+                    'month' => (int) $expense->month  // Keep numeric for comparison
+                ];
+            });
+
+        // Ensure all months in the range are present with total = 0 if no data exists
+        // Format month names for chart display
+        $monthsMap = collect();
+        foreach ($dateRange as $monthDate) {
+            $found = $monthsSpent->firstWhere('month', $monthDate->month);
+            if ($found) {
+                $monthsMap->push([
+                    'total' => $found['total'],
+                    'month' => $monthDate->format('M')
+                ]);
+            } else {
+                $monthsMap->push([
+                    'total' => 0,
+                    'month' => $monthDate->format('M')
+                ]);
+            }
+        }
+
+        return $monthsMap;
+    }
+    private function overallBudgetSpent()
+    {
+        return (float) Expense::forUser(Auth::id())
+            ->inMonth($this->selectedMonth, $this->selectedYear)
+            ->where('category_id', null)
+            ->sum('amount');
+    }
 
     public function mount()
     {
@@ -58,14 +146,7 @@ class Dashboard extends Component
         $this->percentageUsed = $this->monthlyBudget > 0 ? round(($this->totalSpent / $this->monthlyBudget) * 100, 1) : 0;
 
         // Expense by category
-        $this->expenseByCategory = Expense::with('category')->select('categories.name', 'categories.color', DB::raw('SUM(expenses.amount) as total'))
-            ->join('categories', 'expenses.category_id', '=', 'categories.id')
-            ->where('expenses.user_id', $userId)
-            ->whereMonth('expenses.date', $this->selectedMonth)
-            ->whereYear('expenses.date', $this->selectedYear)
-            ->groupBy('categories.name', 'categories.color')
-            ->orderBy('total', 'desc')
-            ->get();
+        $this->expenseByCategory = $this->getExpenseByCategory($userId, $this->selectedMonth, $this->selectedYear);
         // $sqlSentance = DB::query()->select(['categories.name' , 'categories.color' , DB::raw('SUM(expenses.amount) as total')])
         // ->from('expenses')
         // ->join('categories' ,  'expenses.category_id' , '=','categories.id')
@@ -85,18 +166,7 @@ class Dashboard extends Component
             ->get();
 
         // Monthly Comparison
-        $this->monthlyComparison = collect();
-        for ($i = 5; $i >= 0; $i--) {
-            $date = Carbon::create($this->selectedYear, $this->selectedMonth, 1)->subMonths($i);
-            $amount = Expense::forUser($userId)
-                ->inMonth($date->month, $date->year)
-                ->sum('amount');
-            $this->monthlyComparison->push([
-                'month' => $date->format('M'),
-                'total' => $amount,
-            ]);
-        }
-        // dd($this->monthlyComparison);
+        $this->monthlyComparison = $this->getMonthlyComparison($userId, $this->selectedMonth, $this->selectedYear);
 
         // Top Categories
         $this->topCategories = $this->expenseByCategory->take(3);
@@ -128,7 +198,6 @@ class Dashboard extends Component
         $this->selectedYear = $date->year;
         $this->loadDashboardData();
     }
-
     public function nextMonth()
     {
         $date = Carbon::create($this->selectedYear, $this->selectedMonth, 1)->addMonth();
