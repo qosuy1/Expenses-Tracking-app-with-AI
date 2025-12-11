@@ -4,9 +4,11 @@ namespace App\Livewire;
 
 use App\Models\Budget;
 use App\Models\Category;
+use App\Services\BudgetAiService;
 use Carbon\Carbon;
 use Livewire\Component;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Livewire\Attributes\Computed;
 
 class BudgetForm extends Component
@@ -17,8 +19,20 @@ class BudgetForm extends Component
     public $year;
     public $category_id = '';
     public $isEdit = false;
+
+
+    // AI Budget Recommendation properties
+    private $aiService;
+    public $aiRecommendation = null;
+    public $showAIRecommendation = false;
+    public $loadingRecommendation = false;
+    public $hasHistoricalData = false;
+
+
     public function mount($budgetId = null)
     {
+        $this->aiService = new BudgetAiService($this->category_id ?: null, Auth::id(), $this->month, $this->year);
+
         if ($budgetId) {
             $this->isEdit = true;
             $this->budgetId = $budgetId;
@@ -33,7 +47,10 @@ class BudgetForm extends Component
         } else {
             $this->month = date('m');
             $this->year = date('Y');
+            // $this->aiService = new BudgetAiService((int) $this->category_id, Auth::id(), $this->month, $this->year);
+            $this->checkHistoricalData();
         }
+        // $this->hasHistoricalData = $this->aiService->hasEnoughHistoricalData($this->category_id);
     }
     // roles
     public function rules()
@@ -131,6 +148,86 @@ class BudgetForm extends Component
     public function getNumberOfDaysInMonth()
     {
         return Carbon::create($this->year, $this->month)->daysInMonth;
+    }
+
+    // some functions for AI Recommendation will be here
+    public function updateCategoryId()
+    {
+        // dd($this->category_id);
+        $this->aiService = new BudgetAiService($this->category_id ?: null, Auth::id(), $this->month, $this->year);
+        // update category_id in the class
+        // $this->aiService->categoryId = $this->category_id == 0 ? null : $this->category_id;
+
+        $this->hasHistoricalData = $this->aiService->hasEnoughHistoricalData();
+        // if($this->category_id != null)
+        //     dd($this->category_id,$this->hasHistoricalData);
+
+        // reset the Ai recommendations
+        $this->aiRecommendation = null;
+        $this->showAIRecommendation = false;
+    }
+
+    public function getAIRecommendation()
+    {
+        $this->loadingRecommendation = true;
+        $this->aiRecommendation = null;
+
+        try {
+            if (!$this->aiService) {
+                $this->aiService = new BudgetAiService((int) $this->category_id, Auth::id(), $this->month, $this->year);
+            }
+
+
+            $aiRecommendation = $this->aiService->getBudgetRecommendation();
+
+            if ($aiRecommendation) {
+                $this->aiRecommendation = $aiRecommendation;
+                $this->showAIRecommendation = true;
+            } else {
+                session()->flash('error', 'No recommendation available.');
+            }
+        } catch (\Exception $e) {
+            session()->flash('error', 'Failed to fetch AI recommendation. Please try again later.');
+            Log::error('error : Failed to fetch AI recommendation. Please try again later.');
+        } finally {
+            $this->loadingRecommendation = false;
+        }
+    }
+    public function applyRecommendation($type = 'recommended')
+    {
+        if ($this->aiRecommendation)
+            $this->amount = $this->aiRecommendation[$type] ?? $this->aiRecommendation['recommended'];
+    }
+    public function closeAIRecommendation()
+    {
+        $this->showAIRecommendation = false;
+    }
+
+
+    /**
+     * Check historical data when month/year changes
+     */
+    public function updatedMonth()
+    {
+        $this->checkHistoricalData();
+    }
+
+    public function updatedYear()
+    {
+        $this->checkHistoricalData();
+    }
+
+    private function checkHistoricalData()
+    {
+        // if (!$this->aiService)
+        //     $this->aiService = new BudgetAiService((int) $this->category_id, Auth::id(), $this->month, $this->year);
+        // if ($this->month && $this->year) {
+        //     $this->hasHistoricalData = $this->aiService->hasEnoughHistoricalData($this->category_id);
+        // }
+        $this->aiService = new BudgetAiService($this->category_id ?: null, Auth::id(), $this->month, $this->year);
+        if ($this->month && $this->year) {
+            $this->hasHistoricalData = $this->aiService->hasEnoughHistoricalData();
+        }
     }
 
 

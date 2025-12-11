@@ -13,16 +13,27 @@ use App\Livewire\Expense\ExpenseList;
 use App\Livewire\Settings\Appearance;
 use Illuminate\Support\Facades\Route;
 use App\Livewire\Expense\RecurringExpense;
+use App\Services\BudgetAiService;
 
 Route::get('/', function () {
     return view('welcome');
 })->name('home');
 
-Route::get('dashboard', Dashboard::class)
-    ->middleware('auth')
-    ->name('dashboard');
 
 Route::middleware(['auth'])->group(function () {
+
+    // Dashboard
+    Route::get('dashboard', Dashboard::class)
+        ->name('dashboard');
+
+
+    // Ai
+    Route::get('api/v1/ai', function () {
+        $ai = new BudgetAiService(3, auth()->id(), 12, 2025);
+        // dd($ai->hasEnoughHistoricalData(3));
+        $recommendationArray = $ai->getBudgetRecommendation();
+        dd($recommendationArray);
+    });
 
     // Category Routes
     Route::get('/categories', Categories::class)->name('categories.index');

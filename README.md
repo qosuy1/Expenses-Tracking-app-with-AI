@@ -36,6 +36,10 @@ This application is built with the **TALL stack** (Tailwind CSS, Alpine.js, Lara
 
 ![Budgets](screenshots/budgets.jpg)
 
+### Budgets AI recommendations
+
+![Budgets](screenshots/Budget_AiRecommendations.jpg)
+
 ### Categories
 
 ![Categories](screenshots/categories.png)
@@ -47,3 +51,24 @@ This application is built with the **TALL stack** (Tailwind CSS, Alpine.js, Lara
 ### Recurring Expenses
 
 ![Recurring Expenses](screenshots/recurring-expenses.jpg)
+
+## AI Recommendations Feature
+
+The AI Recommendations feature leverages advanced generative AI models to provide personalized budget suggestions based on your historical spending data. This feature includes:
+
+-   **Historical Data Analysis**: Analyzes your spending patterns over the last three months to identify trends and calculate averages, minimums, and maximums.
+-   **Budget Suggestions**: Generates a recommended budget amount, along with a safe minimum and comfortable maximum, tailored to your spending habits.
+-   **Actionable Insights**: Provides a brief explanation of the recommendation and a practical tip to help you stay within your budget.
+-   **Real-Time Updates**: Automatically updates recommendations when you modify categories, months, or years.
+
+### How It Works
+
+1. **Data Collection**: The system fetches your historical spending data for the selected category and time period.
+2. **AI Processing**: The data is sent to the Gemini AI model, which generates a JSON response with budget recommendations.
+3. **User Display**: The recommendations are parsed and displayed in an easy-to-understand format.
+
+### Key Benefits
+
+-   Helps you make informed financial decisions.
+-   Provides actionable tips to improve your budgeting habits.
+-   Saves time by automating the budgeting process.
